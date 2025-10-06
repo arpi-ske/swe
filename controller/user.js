@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 
 const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
@@ -22,7 +22,7 @@ async function register(req, res) {
 
         res.status(201).json(user);
     } catch (error) {
-        console.error(err);
+        console.error(error);
         res.status(500).json({ message:
              "Registration failed" });
     }

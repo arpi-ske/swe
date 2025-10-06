@@ -10,13 +10,14 @@ function authGuard(req, res, next) {
         return res.status(401).json({ message: "No token provided" });
     }
     
-    jwt.verify(token, JWT_SECRET, (err, user) => {
+    jwt.verify(token, JWT_SECRET, (err, decoded) => {
         if (err) {
             return res.status(403).json({ message: "Invalid token" });
         }
+        
         req.user = decoded;
         next();
     });
 }
 
-nodule.exports = authGuard;
+module.exports = authGuard;
