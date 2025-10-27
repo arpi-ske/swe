@@ -31,9 +31,39 @@ async function createUser(dto) {
   return result.rows[0];
 }
 
+async function updateUser(id, dto) {
+  const { username, password, email, role, phone } = dto;
+  const user = await getUserById(id);
+  if (!user) return null;
+
+  const result = await pool.query(
+    `UPDATE ${tableName} SET username=$1, password=$2, phone=$3, email=$4, role=$5
+     WHERE id=$6 RETURNING *`,
+    [
+      username || user.username,
+      password || user.password,
+      phone || user.phone,
+      email || user.email,
+      role || user.role,
+      id,
+    ]
+  );
+  return result.rows[0];
+}
+
+async function deleteUser(id) {
+  const result = await pool.query(
+    `DELETE FROM ${tableName} WHERE id=$1 RETURNING *`,
+    [id]
+  );
+  return result.rows[0];
+}
+
 module.exports = {
   getAllUsers,
   getUserById,
   getUserByPhone,
   createUser,
+  updateUser,
+  deleteUser,
 };
