@@ -1,11 +1,12 @@
-const express = require('express');
-const { register, login, profile } = require('../controller/user');
-const authGuard = require('../middleware/authGuard');
-
+// routes/auth.js
+const express = require("express");
 const router = express.Router();
+const { register, login } = require("../controller/user"); 
 
-router.post('/register', register);
-router.post('/login', login);
-router.get('/profile', authGuard, profile);
+// 🔹 Бүртгэх
+router.post("/register", register);
+
+// 🔹 Нэвтрэх
+router.post("/login", login);
 
 module.exports = router;

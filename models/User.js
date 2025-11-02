@@ -59,10 +59,19 @@ async function deleteUser(id) {
   return result.rows[0];
 }
 
+async function getUserByEmail(email) {
+  const result = await pool.query(
+    `SELECT * FROM users WHERE email = $1`,
+    [email]
+  );
+  return result.rows?.[0];
+}
+
 module.exports = {
   getAllUsers,
   getUserById,
   getUserByPhone,
+  getUserByEmail,
   createUser,
   updateUser,
   deleteUser,

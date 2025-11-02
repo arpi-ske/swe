@@ -5,6 +5,7 @@ const PORT = 3000;
 const categoriesRoutes = require('./routes/categories');
 const productsRoutes = require('./routes/products');
 const authRoutes = require('./routes/auth');
+const userRoutes = require("./routes/user");
 const errorHandler = require('./middleware/error');
 const logger = require('./middleware/logger');
 const appRoutes = require('./routes/app');
@@ -18,6 +19,8 @@ app.use(logger);
 app.use('/api', appRoutes)
 app.use('/api/categories', categoriesRoutes);
 app.use('/api/auth', authRoutes);
+app.use("/api/users", userRoutes);
+
 app.use('/api/products', productsRoutes); 
 
 app.use(errorHandler);
