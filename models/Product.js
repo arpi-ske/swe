@@ -1,109 +1,108 @@
-// const { pool } = require('../db');
-// const tableName = 'products';
-
-// async function getAllProducts() {
-//     const result = await pool.query(`SELECT * FROM ${tableName}`);
-//     return result.rows;
-// }
-
-// async function getProductById(id) {
-//     const result = await pool.query(`SELECT * FROM ${tableName} WHERE id = ${id} `);
-//     return result.rows[0];
-// }
-
-// async function createProduct(dto) {
-//     const { 
-//         name, price, description, stock, brand_id, category_id, discount_id, 
-//         brand_name, category_name, quantity, type, color, size, status, created_at 
-//     } = dto;
-//     const result = await pool.query(
-//         `INSERT INTO products 
-//         (name, price, description, stock, brand_id, category_id, discount_id, brand_name, category_name, quantity, type, color, size, status, created_at)
-//         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
-//         RETURNING *`,
-//         [name, price, description, stock, brand_id, category_id, discount_id, brand_name, category_name, quantity, type, color, size, status, created_at]
-//     );
-
-//     return result.rows[0];
-// }
-
-// async function updateProduct(id, dto) {    
-//     const { 
-//         name, price, description, stock, brand_id, category_id, discount_id, 
-//         brand_name, category_name, quantity, type, color, size, status, created_at 
-//     } = dto;
-
-//     const result = await pool.query(
-//         `UPDATE products SET 
-//             name=$1, price=$2, description=$3, stock=$4, brand_id=$5, category_id=$6, discount_id=$7,
-//             brand_name=$8, category_name=$9, quantity=$10, type=$11, color=$12, size=$13, status=$14, created_at=$15
-//          WHERE id=$16
-//          RETURNING *`,
-//         [name, price, description, stock, brand_id, category_id, discount_id,
-//          brand_name, category_name, quantity, type, color, size, status, created_at, id]
-//     );
-
-//     return result.rows[0];
-// }
-
-// async function deleteProduct(id) {
-//     const result = await pool.query(
-//         `DELETE FROM products WHERE id=$1 RETURNING *`,
-//         [id]
-//     );
-//     return result.rows[0];
-// }
-
-
-// module.exports = { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct };
-
 const { pool } = require('../db');
+
 class Product {
-    #tableName = "products";
-    async getAllProducts({limit, page}) {
-        const result = await pool.query(
-        `SELECT * FROM ${
-        this.#tableName
-      }  LIMIT ${limit} OFFSET ${page} * ${limit}`
+  #tableName = "products";
+
+  // buh buteegdehuuniig avah (attribute haruulahgui)
+  async getAllProducts({ limit = 10, page = 0 } = {}) {
+    const offset = page * limit;
+    const result = await pool.query(
+      `SELECT id, name, price, quantity, description 
+       FROM ${this.#tableName} 
+       ORDER BY id DESC 
+       LIMIT $1 OFFSET $2`,
+      [limit, offset]
     );
     return result.rows;
-    }
-    async getProductById(id) {
-        const result = await pool.query
-        (`SELECT * FROM ${this.#tableName} WHERE id = $1`, [id]);
-        return result.rows[0];
-    }
-    async getProductByName(name) {
-        const result = await pool.query
-        (`SELECT * FROM ${this.#tableName} WHERE lower(name) = $1`,
-        [name.toLowerCase()]);
-        return result.rows[0];
-    }
-    async createProduct(dto) {
-    const { name, price, quantity } = dto;
-    if (price <= 0) throw new Error("үнийн дүн 0-с их байх ёстой", 400);
+  }
 
-    const product = await this.getProductByName(name);
-    if (product) throw new Error("Бүртгэлтэй бүтээгдэхүүн", 400);
+  // id aar buteegdehuun avah (attribute hargduulah)
+  async getProductById(id) {
     const result = await pool.query(
-      `INSERT INTO ${this.#tableName} (name, price, quantity)
-       VALUES ($1, $2, $3) RETURNING *`,
-      [name, price, quantity]
+      `SELECT * FROM ${this.#tableName} WHERE id=$1`,
+      [id]
     );
     return result.rows[0];
   }
+
+  // --- Attributes-г тухайн бүтээгдэхүүнээс авах ---
+  async getAttributesByProductId(productId) {
+    const result = await pool.query(`
+      SELECT a.name AS attribute_name, av.value AS attribute_value
+      FROM product_attributes pa
+      JOIN attributes a ON pa.attribute_id = a.id
+      JOIN attribute_values av ON pa.attribute_value_id = av.id
+      WHERE pa.product_id = $1
+    `, [productId]);
+
+    return result.rows.map(r => ({
+      name: r.attribute_name,
+      value: r.attribute_value
+    }));
+  }
+
+  // shine buteegdehuun uusgeh
+  async createProduct(dto) {
+    const { name, price, quantity, description, attributes } = dto;
+
+    if (price <= 0) throw new Error("Үнийн дүн 0-с их байх ёстой");
+
+    // ner dawhardsan esehiig shalgah
+    const existing = await pool.query(`SELECT id FROM ${this.#tableName} WHERE LOWER(name) = $1`, [name.toLowerCase()]);
+    if (existing.rows.length > 0) throw new Error("Бүртгэлтэй бүтээгдэхүүн");
+
+    // buteegdehuun uusgeh
+    const result = await pool.query(
+      `INSERT INTO ${this.#tableName} (name, price, quantity, description)
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [name, price, quantity, description || null]
+    );
+    const newProduct = result.rows[0];
+
+    // attribute nemeh
+    if (attributes && attributes.length > 0) {
+      for (const attr of attributes) {
+        // attribute shalgah, uusgeh
+        let attrRes = await pool.query(`SELECT id FROM attributes WHERE name=$1`, [attr.name]);
+        let attributeId;
+        if (attrRes.rows.length === 0) {
+          attrRes = await pool.query(`INSERT INTO attributes (name) VALUES ($1) RETURNING id`, [attr.name]);
+        }
+        attributeId = attrRes.rows[0].id;
+
+        // attribute value shalgah, uusgeh
+        let valRes = await pool.query(`SELECT id FROM attribute_values WHERE attribute_id=$1 AND value=$2`, [attributeId, attr.value]);
+        let valueId;
+        if (valRes.rows.length === 0) {
+          valRes = await pool.query(`INSERT INTO attribute_values (attribute_id, value) VALUES ($1, $2) RETURNING id`, [attributeId, attr.value]);
+        }
+        valueId = valRes.rows[0].id;
+
+        // product attribute holboos
+        await pool.query(`INSERT INTO product_attributes (product_id, attribute_id, attribute_value_id) VALUES ($1, $2, $3)`,
+          [newProduct.id, attributeId, valueId]);
+      }
+    }
+
+    return newProduct;
+  }
+
+  // buteegdehuun shinechleh
   async updateProduct(id, dto) {
-    const { name, price, quantity } = dto;
+    const { name, price, quantity, description } = dto;
     const product = await this.getProductById(id);
     if (!product) return null;
 
     const result = await pool.query(
-      `UPDATE ${this.#tableName} SET name=$1, price=$2, quantity=$3
-       WHERE id=$4 RETURNING *`,
-      [name || product.name, price || product.price, quantity || product.quantity, id]
+      `UPDATE ${this.#tableName}
+       SET name=$1, price=$2, quantity=$3, description=$4
+       WHERE id=$5 RETURNING *`,
+      [name || product.name, price || product.price, quantity || product.quantity, description || product.description, id]
     );
     return result.rows[0];
   }
+
+  //  buteegdehuun ustgah
   async deleteProduct(id) {
     const result = await pool.query(
       `DELETE FROM ${this.#tableName} WHERE id=$1 RETURNING *`,

@@ -1,33 +1,24 @@
-// const express = require('express');
-// const authGuard = require('../middleware/authGuard');
-
-// const {
-//     getProducts,
-//     getProductById,  
-//     createProduct,
-//     updateProduct,
-//     deleteProduct,
-// } = require("../controller/products");
-
-// const router = express.Router();
-
-// router.route('/')
-//   .get(getProducts)
-//     .post(authGuard, createProduct);
-
-// router.route('/:id')
-//   .get(getProductById)  
-//   .put(authGuard, updateProduct)
-//   .delete(authGuard, deleteProduct);
-
-// module.exports = router;
-
-const express = require("express");
-const ProductController  = require("../controller/products");
-const Product  = require("../models/Product");
-
+const express = require('express');
 const router = express.Router();
-const product = new ProductController(new Product());
-router.route("/").get(product.getProducts.bind(product)).post(product.createProduct.bind(product));
-router.route("/:id").get(product.getProductsById.bind(product));
+const Product = require('../models/Product');
+const ProductController = require('../controller/products');
+
+const productModel = new Product();
+const productController = new ProductController(productModel);
+
+// product ( attribute haruulahgui)
+router.get('/', productController.getProducts.bind(productController));
+
+// neg product (attributetai )
+router.get('/detail/:id', productController.getProductDetail.bind(productController));
+
+// shine uusgeh
+router.post('/', productController.createProduct.bind(productController));
+
+// shinechleh
+router.put('/:id', productController.updateProduct.bind(productController));
+
+// ustgah
+router.delete('/:id', productController.deleteProduct.bind(productController));
+
 module.exports = router;

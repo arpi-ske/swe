@@ -11,7 +11,7 @@ exports.getCategories = async (req, res, next) => {
         next(err);
     }
 };
-exports.getCategoryById = async (req, res, next) => {
+exports.getCategory = async (req, res, next) => {
     try {
         const category = await Category.getCategoryById(req.params.id);
         if (!category) {
@@ -29,7 +29,7 @@ exports.getCategoryById = async (req, res, next) => {
     }
 };
 
-exports.updateCategory = async (req, res, next) => {
+exports.updateCategory = async (req, res, next,) => {
     try {
         const category = await Category.updateCategory(req.params.id, req.body);
         if (!category) {

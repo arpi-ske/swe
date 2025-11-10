@@ -12,7 +12,8 @@ function authGuard(req, res, next) {
     
     jwt.verify(token, JWT_SECRET, (err, decoded) => {
         if (err) {
-            return res.status(403).json({ message: "Invalid token" });
+            console.log(decoded);
+            return res.status(403).json({ message: err + " Invalid token" });
         }
         
         req.user = decoded;

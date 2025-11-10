@@ -9,6 +9,7 @@ const userRoutes = require("./routes/user");
 const errorHandler = require('./middleware/error');
 const logger = require('./middleware/logger');
 const appRoutes = require('./routes/app');
+const brandsRoutes = require('./routes/brand');
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use('/api', appRoutes)
 app.use('/api/categories', categoriesRoutes);
 app.use('/api/auth', authRoutes);
 app.use("/api/users", userRoutes);
+app.use('/api/brand', brandsRoutes);
 
 app.use('/api/products', productsRoutes); 
 

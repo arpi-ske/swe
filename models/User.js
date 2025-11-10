@@ -37,7 +37,7 @@ async function updateUser(id, dto) {
   if (!user) return null;
 
   const result = await pool.query(
-    `UPDATE ${tableName} SET username=$1, password=$2, phone=$3, email=$4, role=$5
+    `UPDATE ${tableName} SET username=$1, password=$2, phone=$3, email=$4, role=$5, updated_at=CURRENT_TIMESTAMP
      WHERE id=$6 RETURNING *`,
     [
       username || user.username,
@@ -47,6 +47,15 @@ async function updateUser(id, dto) {
       role || user.role,
       id,
     ]
+  );
+  return result.rows[0];
+}
+
+async function updatePassword(userId, newPasswordHash) {
+  const result = await pool.query(
+    `UPDATE ${tableName} SET password = $1, updated_at = CURRENT_TIMESTAMP 
+     WHERE id = $2 RETURNING id, username, email, phone, role`,
+    [newPasswordHash, userId]
   );
   return result.rows[0];
 }
@@ -74,5 +83,6 @@ module.exports = {
   getUserByEmail,
   createUser,
   updateUser,
+  updatePassword,
   deleteUser,
 };

@@ -1,22 +1,23 @@
-const express = require('express');
-
+const express = require("express");
+const authGuard = require("../middleware/authGuard");
+const { requireRoles, ROLES } = require("../middleware/roleGuard");
 const {
-    getCategories,
-    getCategoryById,  
-    createCategory,
-    updateCategory,
-    deleteCategory,
+  getCategories,
+  getCategory,
+  createCategory,
+  updateCategory,
+  deleteCategory,
 } = require("../controller/categories");
 
 const router = express.Router();
 
-router.route('/')
-  .get(getCategories)
-  .post(createCategory);
+// anglil harah, user
+router.get("/", getCategories);
+router.get("/:id", getCategory);
 
-router.route('/:id')
-  .get(getCategoryById)  
-  .put(updateCategory)
-  .delete(deleteCategory);
+// admin routes
+router.post("/", authGuard, requireRoles(ROLES.ADMIN), createCategory);
+router.put("/:id", authGuard, requireRoles(ROLES.ADMIN), updateCategory);
+router.delete("/:id", authGuard, requireRoles(ROLES.ADMIN), deleteCategory);
 
 module.exports = router;
