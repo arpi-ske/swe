@@ -43,4 +43,4 @@ class Shipment {
   }
 }
 
-module.exports = Shipment;
+module.exports = new Shipment();
