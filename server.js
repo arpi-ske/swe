@@ -10,6 +10,10 @@ const errorHandler = require('./middleware/error');
 const logger = require('./middleware/logger');
 const appRoutes = require('./routes/app');
 const brandsRoutes = require('./routes/brand');
+const orderRoutes = require('./routes/orders');
+const cartRoutes = require('./routes/cart');
+const paymentRoutes = require('./routes/payment');
+const shipmentRoutes = require('./routes/shipment');
 
 const app = express();
 
@@ -22,6 +26,10 @@ app.use('/api/categories', categoriesRoutes);
 app.use('/api/auth', authRoutes);
 app.use("/api/users", userRoutes);
 app.use('/api/brand', brandsRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/payment', paymentRoutes);
+app.use('/api/shipment', shipmentRoutes);
 
 app.use('/api/products', productsRoutes); 
 
