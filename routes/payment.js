@@ -1,15 +1,21 @@
-const express = require('express');
-const Payment = require('../models/Payment');
-const PaymentController = require('../controller/payment');
-
+const express = require("express");
 const router = express.Router();
-const controller = new PaymentController(Payment);
+const authGuard = require("../middleware/authGuard");
+const { requireRoles, ROLES } = require("../middleware/roleGuard");
+const {
+  createPayment,
+  confirmPayment,
+  getOrderPayments,
+} = require("../controller/payment");
 
-router.get('/', (req, res, next) => controller.getAllPayments(req, res, next));
-router.get('/:id', (req, res, next) => controller.getPaymentById(req, res, next));
-router.get('/user/:user_id', (req, res, next) => controller.getPaymentsByUser(req, res, next));
-router.post('/', (req, res, next) => controller.createPayment(req, res, next));
-router.put('/:id', (req, res, next) => controller.updatePayment(req, res, next));
-router.delete('/:id', (req, res, next) => controller.deletePayment(req, res, next));
+router.use(authGuard);
+
+// Хэрэглэгч → төлбөр үүсгэх
+router.post("/", createPayment);
+
+// Захиалгын төлбөрүүдийг харах
+router.get("/order/:orderId", getOrderPayments);
+
+// Админ → төлбөр баталгаажуулах
 
 module.exports = router;

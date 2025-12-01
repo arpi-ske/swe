@@ -1,15 +1,31 @@
-
-const express = require('express');
-const Cart = require('../models/Cart');
-const CartController = require('../controller/cart');
-
+const express = require("express");
 const router = express.Router();
-const cartModel = new Cart();
-const controller = new CartController(cartModel);
+const authGuard = require("../middleware/authGuard");
+const { requireRoles, ROLES } = require("../middleware/roleGuard");
 
-router.get('/:user_id', (req, res, next) => controller.getCartByUser(req, res, next));
-router.post('/', (req, res, next) => controller.addToCart(req, res, next));
-router.put('/:id', (req, res, next) => controller.updateCartItem(req, res, next));
-router.delete('/:id', (req, res, next) => controller.deleteCartItem(req, res, next));
+const {
+  getCart,
+  addToCart,
+  updateCartItem,
+  removeCartItem,
+} = require("../controller/cart");
+
+const cartController = require("../controller/cart");
+
+// бүх route-ууд authentication шаардана
+router.use(authGuard);
+
+// User cart үйлдлүүд
+router.get("/", getCart);
+router.post("/", addToCart);
+router.put("/:itemId", updateCartItem);
+router.delete("/:itemId", removeCartItem);
+
+// Admin — бүх хэрэглэгчийн cart харах
+router.get(
+  "/admin/all",
+  requireRoles(ROLES.ADMIN),  // зөвхөн админ
+  cartController.adminGetAllCarts.bind(cartController)
+);
 
 module.exports = router;

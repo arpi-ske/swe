@@ -1,18 +1,79 @@
-const express = require('express');
-const Order = require('../models/Order');
-const OrderController = require('../controller/orders');
-
+// routes/orders.js
+const express = require("express");
 const router = express.Router();
+const authGuard = require("../middleware/authGuard");
+const { requireRoles, ROLES } = require("../middleware/roleGuard");
+const ordersController = require("../controller/orders");
 
-const orderModel = new Order();
+// админ бүх захиалгыг харна
+router.get(
+  "/",
+  authGuard,
+  requireRoles(ROLES.ADMIN),
+  ordersController.getOrders.bind(ordersController)
+);
 
-const controller = new OrderController(orderModel);
+// user checkout from own cart
+router.post(
+  "/checkout",
+  authGuard,
+  ordersController.checkoutFromCart.bind(ordersController)
+);
 
-router.get('/', (req, res, next) => controller.getAllOrders(req, res, next));
-router.get('/user/:user_id', (req, res, next) => controller.getOrdersByUser(req, res, next));
-router.get('/:id', (req, res, next) => controller.getOrderById(req, res, next));
-router.post('/', (req, res, next) => controller.createOrder(req, res, next));
-router.put('/:id', (req, res, next) => controller.updateOrder(req, res, next));
-router.delete('/:id', (req, res, next) => controller.deleteOrder(req, res, next));
+// захиалгыг дэлгэрэнгүй (хэрэглэгч өөрийнхөө, админ бүгдийг)
+router.get(
+  "/:id",
+  authGuard,
+  ordersController.getOrder.bind(ordersController)
+);
+
+// админ: захиалгыг илгээсэн гэж тэмдэглэх (shipment үүсгэнэ)
+router.post(
+  "/:id/ship",
+  authGuard,
+  requireRoles(ROLES.ADMIN),
+  ordersController.shipOrder.bind(ordersController)
+);
+
+// админ: захиалга хүргэгдсэн гэж тэмдэглэх
+router.post(
+  "/:id/deliver",
+  authGuard,
+  requireRoles(ROLES.ADMIN),
+  ordersController.markDelivered.bind(ordersController)
+);
+
+// админ гар аргаар үүсгэх
+router.post(
+  "/",
+  authGuard,
+  requireRoles(ROLES.ADMIN),
+  ordersController.createOrder.bind(ordersController)
+);
+
+// захиалгын статус, хаяг шинэчлэх
+router.put(
+  "/:id",
+  authGuard,
+  requireRoles(ROLES.ADMIN),
+  ordersController.updateOrder.bind(ordersController)
+);
+
+// устгах
+router.delete(
+  "/:id",
+  authGuard,
+  requireRoles(ROLES.ADMIN),
+  ordersController.deleteOrder.bind(ordersController)
+);
+
+router.get(
+  "/status/:status",
+  authGuard,
+  requireRoles(ROLES.ADMIN),
+  ordersController.getOrdersByStatus.bind(ordersController)
+);
 
 module.exports = router;
+
+ 

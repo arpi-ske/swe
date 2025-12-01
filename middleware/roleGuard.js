@@ -34,7 +34,7 @@ function requirePermission(permission) {
 function requireRoles(...allowed) {
   return function(req, res, next) {
     if (!req.user) return res.status(401).json({ success:false, message:"Нэвтрэх шаардлагатай" });
-    if (!allowed.includes(req.user.role)) {
+    if (!allowed.includes(+(req.user?.role ?? 10))) {
       return res.status(403).json({ success:false, message:"Эрх хүрэлцэхгүй байна" });
     }
     next();

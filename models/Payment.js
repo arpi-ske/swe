@@ -1,57 +1,130 @@
-const { pool } = require('../db');
+// // models/Payment.js
+// const { pool } = require("../db");
+// const OrderModel = require("../models/Order");
 
-class Payment {
-  #tableName = 'payment';
+// class PaymentModel {
+//   async create({ order_id, method_id = 1, amount, provider_ref = null, status = "paid" }) {
+//     const paid_at = new Date();
 
-  async createPayment(dto) {
-    const { user_id, amount, method_id, status, paid_at } = dto;
-    const result = await pool.query(
-      `INSERT INTO ${this.#tableName} (user_id, amount, method_id, status, paid_at, created_at, updated_at)
-       VALUES ($1,$2,$3,$4,$5,NOW(),NOW()) RETURNING *`,
-      [user_id, amount, method_id, status, paid_at || null]
+//     const res = await pool.query(
+//       `
+//       INSERT INTO payments (
+//         order_id,
+//         method_id,
+//         amount,
+//         provider_ref,
+//         status,
+//         paid_at
+//       )
+//       VALUES ($1, $2, $3, $4, $5, $6)
+//       RETURNING *
+//       `,
+//       [order_id, method_id, amount, provider_ref, status, paid_at]
+//     );
+
+//     const payment = res.rows[0];
+
+//     // Auto-update order → no confirm needed
+//     await this._autoCheckOrderPayment(order_id);
+
+//     return payment;
+//   }
+
+//   async _autoCheckOrderPayment(order_id) {
+//     const orderRes = await pool.query(
+//       `SELECT total_amount FROM orders WHERE id = $1`,
+//       [order_id]
+//     );
+
+//     if (orderRes.rowCount === 0) return;
+
+//     const total_amount = Number(orderRes.rows[0].total_amount);
+
+//     const paidRes = await pool.query(
+//       `SELECT SUM(amount) AS paid FROM payments WHERE order_id = $1`,
+//       [order_id]
+//     );
+
+//     const paid = Number(paidRes.rows[0].paid || 0);
+
+//     if (paid >= total_amount) {
+//       await OrderModel.update(order_id, { status: "paid" });
+//     } 
+//   }
+
+//   async getByOrder(orderId) {
+//     const res = await pool.query(
+//       `SELECT * FROM payments WHERE order_id = $1 ORDER BY id DESC`,
+//       [orderId]
+//     );
+//     return res.rows;
+//   }
+// }
+
+// module.exports = new PaymentModel();
+
+
+// models/Payment.js
+const { pool } = require("../db");
+const OrderModel = require("../models/Order");
+
+class PaymentModel {
+  async create({ order_id, method_id = 1, amount, provider_ref = null, status = "paid" }) {
+    const paid_at = new Date();
+
+    const res = await pool.query(
+      `
+      INSERT INTO payments (
+        order_id,
+        method_id,
+        amount,
+        provider_ref,
+        status,
+        paid_at
+      )
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING *
+      `,
+      [order_id, method_id, amount, provider_ref, status, paid_at]
     );
-    return result.rows[0];
+
+    const payment = res.rows[0];
+
+    // Auto-update order → no confirm needed
+    await this._autoCheckOrderPayment(order_id);
+
+    return payment;
   }
 
-  async getPaymentById(id) {
-    const result = await pool.query(
-      `SELECT * FROM ${this.#tableName} WHERE id=$1`,
-      [id]
+  async _autoCheckOrderPayment(order_id) {
+    const orderRes = await pool.query(
+      `SELECT total_amount FROM orders WHERE id = $1`,
+      [order_id]
     );
-    return result.rows[0];
+
+    if (orderRes.rowCount === 0) return;
+
+    const total_amount = Number(orderRes.rows[0].total_amount);
+
+    const paidRes = await pool.query(
+      `SELECT SUM(amount) AS paid FROM payments WHERE order_id = $1`,
+      [order_id]
+    );
+
+    const paid = Number(paidRes.rows[0].paid || 0);
+
+    if (paid >= total_amount) {
+      await OrderModel.update(order_id, { status: "paid" });
+    } 
   }
 
-  async getAllPayments() {
-    const result = await pool.query(`SELECT * FROM ${this.#tableName}`);
-    return result.rows;
-  }
-
-  async updatePayment(id, dto) {
-    const { amount, status, method_id, paid_at } = dto;
-    const result = await pool.query(
-      `UPDATE ${this.#tableName} 
-       SET amount=$1, status=$2, method_id=$3, paid_at=$4, updated_at=NOW()
-       WHERE id=$5 RETURNING *`,
-      [amount, status, method_id, paid_at, id]
+  async getByOrder(orderId) {
+    const res = await pool.query(
+      `SELECT * FROM payments WHERE order_id = $1 ORDER BY id DESC`,
+      [orderId]
     );
-    return result.rows[0];
-  }
-
-  async deletePayment(id) {
-    const result = await pool.query(
-      `DELETE FROM ${this.#tableName} WHERE id=$1 RETURNING *`,
-      [id]
-    );
-    return result.rows[0];
-  }
-
-  async getPaymentsByUser(user_id) {
-    const result = await pool.query(
-      `SELECT * FROM ${this.#tableName} WHERE user_id=$1`,
-      [user_id]
-    );
-    return result.rows;
+    return res.rows;
   }
 }
 
-module.exports = Payment;
+module.exports = new PaymentModel();

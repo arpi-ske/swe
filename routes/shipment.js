@@ -1,9 +1,11 @@
 const express = require('express');
-const Shipment = require('../models/Shipment');
+const Shipment = require('../models/Shipment'); 
 const ShipmentController = require('../controller/shipment');
 
 const router = express.Router();
-const shipmentModel = new Shipment();      
+
+
+const shipmentModel = Shipment; 
 const controller = new ShipmentController(shipmentModel);
 
 router.post('/', (req, res, next) => controller.createShipment(req, res, next));
